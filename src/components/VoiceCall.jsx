@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:3000");
+const socket = io("wss://");
 const roomID = "test-room";
 
 function VoiceCall() {
@@ -18,13 +18,17 @@ function VoiceCall() {
   };
 
   //Handle Mute Button
-  const muteElem = (e) => {
-    e.muted = !e.muted;
+  const muteElem = () => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !track.enabled;
+      });
+    }
   };
   //Handle Joining call/leave call button
   const toggleButton = () => {
     setWhichButton(!whichButton);
-    if (whichButton) {
+    if (!whichButton) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
@@ -36,7 +40,10 @@ function VoiceCall() {
         });
     } else {
       socket.emit("leave-call", roomID);
-      setlocalStream(null);
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+        setlocalStream(null);
+      }
       setremoteStream([]);
     }
   };
@@ -75,7 +82,7 @@ function VoiceCall() {
       socket.emit("offer", { offer, to: user });
     });
     socket.on("offer", async ({ offer, ID }) => {
-      newPeerConnect = new RTCPeerConnection(configuration);
+      const newPeerConnect = new RTCPeerConnection(configuration);
       peerConnection.current[ID] = newPeerConnect;
 
       if (localStream) {
@@ -120,14 +127,24 @@ function VoiceCall() {
         await connection.addIceCandidate(new RTCIceCandidate(candidate));
       }
     });
-    socket.on("new-participant-left", (userID) => {});
+    socket.on("new-participant-left", (userID) => {
+      setremoteStream((prevStreams) =>
+        prevStreams.filter((user) => user.id !== userID)
+      );
+      setvoiceUsers((prevUsers) =>
+        prevUsers.filter((streamObj) => streamObj.id !== userID)
+      );
+    });
     return () => {
+      socket.disconnect();
+      Object.values(peerConnection.current).forEach((pc) => pc.close());
       socket.off("user-joined");
       socket.off("user-left");
       socket.off("new-participant");
       socket.off("ice-candidate");
       socket.off("offer");
       socket.off("answer");
+      socket.off("new-participant-left");
     };
   }, [localStream]);
   return (
@@ -148,12 +165,7 @@ function VoiceCall() {
             Leave Call
           </button>
         )}
-        <button
-          className="mute-button"
-          onClick={() =>
-            document.querySelectorAll("audio").forEach((e) => muteElem(e))
-          }
-        >
+        <button className="mute-button" onClick={() => muteElem()}>
           Mute
         </button>
       </span>

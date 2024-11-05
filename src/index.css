@@ -1,0 +1,11 @@
+.web-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: hsl(0, 0%, 15%);
+  list-style-type: none;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  margin-top: 0px;
+  
+}
