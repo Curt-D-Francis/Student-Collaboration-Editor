@@ -1,20 +1,9 @@
-
-    const https = require('https');
-    const fs = require('fs');
     const express = require('express');
     const {Server} = require('socket.io');
     require('dotenv/config');
     
     const app = express();
-    const privateKey = fs.readFileSync('', 'utf8')
-    const certificate = fs.readFileSync('', 'utf8')
-    const ca = fs.readFileSync('', 'utf8')
-    const credentials = {
-        key: privateKey,
-        cert: certificate,
-        ca:ca,
-    }
-    const server = https.createServer(credentials, app);
+    const server = require('http').createServer(app);
     let connectedUsers = [];
 
     const io = new Server(server);
@@ -42,7 +31,7 @@
             console.log(`${socket.id} has disconnected`);
             connectedUsers = connectedUsers.filter(user => user.id !== socket.id);
             io.emit('user-left', connectedUsers);
-            io.to(roomID).emit('new-participant-left', socket.id);
+            io.to(roomID).emit('participant-left', socket.id);
             socket.leave(roomID)
         })
 
@@ -56,11 +45,11 @@
                 io.to(roomID).emit('user-left', connectedUsers);
 
                 // Notify others in the room about the participant leaving
-                socket.broadcast.to(roomID).emit('new-participant-left', socket.id);
+                socket.broadcast.to(roomID).emit('participant-left', socket.id);
             }
         });
         });
-    const PORT = process.env.PORT || 443;
+    const PORT = process.env.PORT || 3000;
     server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     });

@@ -44,6 +44,8 @@ function VoiceCall() {
         localStream.getTracks().forEach((track) => track.stop());
         setlocalStream(null);
       }
+      Object.values(peerConnection.current).forEach((pc) => pc.close());
+      peerConnection.current = {};
       setremoteStream([]);
     }
   };
@@ -127,7 +129,7 @@ function VoiceCall() {
         await connection.addIceCandidate(new RTCIceCandidate(candidate));
       }
     });
-    socket.on("new-participant-left", (userID) => {
+    socket.on("participant-left", (userID) => {
       setremoteStream((prevStreams) =>
         prevStreams.filter((user) => user.id !== userID)
       );
@@ -144,7 +146,7 @@ function VoiceCall() {
       socket.off("ice-candidate");
       socket.off("offer");
       socket.off("answer");
-      socket.off("new-participant-left");
+      socket.off("participant-left");
     };
   }, [localStream]);
   return (

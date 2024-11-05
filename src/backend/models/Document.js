@@ -1,7 +1,7 @@
 
 const mongo = require('mongoose');
 
-const Schema = mongoose.Schema;
+const Schema = mongo.Schema;
 
 const documentSchema = new Schema({
   title: String,
@@ -10,12 +10,18 @@ const documentSchema = new Schema({
   collaborators: [
     {
       userId: { type: Schema.Types.ObjectId, ref: 'User' },
-      permission: String
+      permission: {type: String,
+                   enum: ['view', 'edit', 'comment'],
+                   default: 'view'
+      }
     }
   ],
-  createdAt: Date,
-  updatedAt: Date
-});
+},{timestamps:true});
+
+documentSchema.index({ owner: 1 });
+documentSchema.index({ 'collaborators.userId': 1 });
 
 const Document = mongo.model('Document', documentSchema);
+
+module.exports = Document;
 
