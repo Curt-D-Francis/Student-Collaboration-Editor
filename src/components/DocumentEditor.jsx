@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { fetchDocument, updateCollaboratorPermission } from "../api/editorAPI";
 function DocumentEditor() {
+  const { documentId } = useParams(); // Extract documentId from the URL
   const [document, setDocument] = useState(null);
+
   useEffect(() => {
     // Fetch document data on component mount
     const loadDocument = async () => {

@@ -17,6 +17,20 @@ export const createDocument = async (title, content, ownerId) => {
   }
 };
 
+export const fetchDocuments = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/documents`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    throw error;
+  }
+};
 // Function to fetch a specific document by its ID
 export const fetchDocument = async (documentId) => {
   try {
